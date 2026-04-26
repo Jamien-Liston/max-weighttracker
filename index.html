@@ -59,10 +59,6 @@
   .gate-sub { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 2rem; }
   .gate-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); text-align: left; margin-bottom: 6px; display: block; }
   .gate-section { margin-bottom: 1.25rem; }
-  .user-picker { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .user-btn { padding: 12px; border-radius: 8px; border: 1px solid var(--border-strong); background: transparent; color: var(--text-muted); font-family: var(--mono); font-size: 13px; cursor: pointer; transition: all 0.12s; }
-  .user-btn:hover { background: var(--surface-2); color: var(--text); }
-  .user-btn.selected { background: var(--accent-light); border-color: var(--accent); color: var(--accent); font-weight: 500; }
   .gate-input { width: 100%; height: 40px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface); color: var(--text); font-family: var(--mono); font-size: 14px; padding: 0 12px; outline: none; transition: border-color 0.12s; text-align: center; letter-spacing: 0.1em; }
   .gate-input:focus { border-color: var(--accent); }
   .gate-error { font-size: 12px; color: var(--red); margin-top: 8px; min-height: 18px; }
@@ -73,8 +69,6 @@
   .wordmark { display: flex; align-items: baseline; gap: 8px; }
   .wordmark-max { font-family: var(--serif); font-weight: 500; font-size: 20px; color: var(--accent); letter-spacing: -0.02em; font-style: italic; }
   .wordmark-sub { font-family: var(--mono); font-size: 11px; color: var(--text-faint); letter-spacing: 0.06em; }
-  .header-right { display: flex; align-items: center; gap: 10px; }
-  .user-badge { font-size: 11px; padding: 4px 10px; border-radius: 20px; background: var(--accent-light); color: var(--accent); font-weight: 500; }
 
   /* Buttons */
   .btn { display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 10px; border-radius: 6px; font-family: var(--mono); font-size: 11px; cursor: pointer; border: 1px solid var(--border-strong); background: transparent; color: var(--text-muted); transition: background 0.12s, color 0.12s; white-space: nowrap; }
@@ -119,14 +113,13 @@
 
   /* List */
   .list-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
-  .list-header { display: grid; grid-template-columns: 110px 80px 72px 62px 1fr 70px; padding: 8px 16px; background: var(--surface-2); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); border-bottom: 1px solid var(--border); gap: 8px; }
-  .list-row { display: grid; grid-template-columns: 110px 80px 72px 62px 1fr 70px; padding: 10px 16px; border-bottom: 1px solid var(--border); gap: 8px; align-items: center; transition: background 0.1s; }
+  .list-header { display: grid; grid-template-columns: 110px 80px 72px 1fr 70px; padding: 8px 16px; background: var(--surface-2); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); border-bottom: 1px solid var(--border); gap: 8px; }
+  .list-row { display: grid; grid-template-columns: 110px 80px 72px 1fr 70px; padding: 10px 16px; border-bottom: 1px solid var(--border); gap: 8px; align-items: center; transition: background 0.1s; }
   .list-row:last-child { border-bottom: none; }
   .list-row:hover { background: var(--surface-2); }
   .col-date { font-size: 12px; color: var(--text-muted); }
   .col-weight { font-family: var(--serif); font-size: 17px; font-weight: 300; }
   .col-delta { font-size: 12px; }
-  .col-who { font-size: 11px; color: var(--text-faint); }
   .col-note { font-size: 12px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .delta-neg { color: var(--green); }
   .delta-pos { color: var(--red); }
@@ -155,8 +148,6 @@
     header { padding: 0 1rem; padding-top: var(--safe-top); }
     .stats-row { grid-template-columns: repeat(2, 1fr); }
     .list-header, .list-row { grid-template-columns: 90px 70px 62px 1fr 60px; }
-    .col-who { display: none; }
-    .list-header span:nth-child(4) { display: none; }
     .wordmark-sub { display: none; }
     #inp-date { width: 140px; }
   }
@@ -169,14 +160,6 @@
   <div class="gate-card">
     <div class="gate-logo">M</div>
     <div class="gate-sub">WeightTracker</div>
-
-    <div class="gate-section">
-      <span class="gate-label">Who are you?</span>
-      <div class="user-picker">
-        <button class="user-btn" onclick="selectUser('Christine')" id="ubtn-Christine">Christine</button>
-        <button class="user-btn" onclick="selectUser('Jamien')" id="ubtn-Jamien">Jamien</button>
-      </div>
-    </div>
 
     <div class="gate-section">
       <span class="gate-label">Passphrase</span>
@@ -195,10 +178,7 @@
       <span class="wordmark-max">Max</span>
       <span class="wordmark-sub">WeightTracker</span>
     </div>
-    <div class="header-right">
-      <span class="user-badge" id="user-badge"></span>
-      <button class="btn" onclick="switchUser()">Switch</button>
-    </div>
+
   </header>
 
   <main>
@@ -247,7 +227,7 @@
     <div id="view-list" style="display:none;">
       <div class="list-card">
         <div class="list-header">
-          <span>Date</span><span>Weight</span><span>Change</span><span>Who</span><span>Note</span><span></span>
+          <span>Date</span><span>Weight</span><span>Change</span><span>Note</span><span></span>
         </div>
         <div id="list-body"></div>
       </div>
@@ -267,8 +247,7 @@ const USER_COLORS  = {
   dark:  { Christine: { line:'#6B8EF0', fill:'rgba(107,142,240,0.1)' }, Jamien: { line:'#3AAA78', fill:'rgba(58,170,120,0.1)' } }
 };
 
-let currentUser = null;
-let selectedUser = null;
+let currentUser = 'user';
 let entries = [];
 let editingId = null;
 let chart = null;
@@ -293,39 +272,17 @@ async function sbFetch(path, options = {}) {
 }
 
 // ── Gate ───────────────────────────────────────────────
-function selectUser(name) {
-  selectedUser = name;
-  USERS.forEach(u => document.getElementById('ubtn-' + u).classList.toggle('selected', u === name));
-}
-
 function tryUnlock() {
   const pass = document.getElementById('gate-pass').value;
   const err = document.getElementById('gate-error');
-  if (!selectedUser) { err.textContent = 'Please select who you are'; return; }
   if (pass !== PASSPHRASE) { err.textContent = 'Incorrect passphrase'; return; }
   err.textContent = '';
-  currentUser = selectedUser;
-  localStorage.setItem('mwt_user', currentUser);
   localStorage.setItem('mwt_auth', '1');
   showApp();
 }
 
 function tryAutoLogin() {
-  const auth = localStorage.getItem('mwt_auth');
-  const user = localStorage.getItem('mwt_user');
-  if (auth === '1' && USERS.includes(user)) { currentUser = user; return true; }
-  return false;
-}
-
-function switchUser() {
-  localStorage.removeItem('mwt_auth');
-  localStorage.removeItem('mwt_user');
-  currentUser = selectedUser = null;
-  document.getElementById('gate-pass').value = '';
-  document.getElementById('gate-error').textContent = '';
-  USERS.forEach(u => document.getElementById('ubtn-' + u).classList.remove('selected'));
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('gate').style.display = 'flex';
+  return localStorage.getItem('mwt_auth') === '1';
 }
 
 document.getElementById('gate-pass').addEventListener('keydown', e => { if (e.key === 'Enter') tryUnlock(); });
@@ -334,7 +291,6 @@ document.getElementById('gate-pass').addEventListener('keydown', e => { if (e.ke
 function showApp() {
   document.getElementById('gate').style.display = 'none';
   document.getElementById('app').style.display = 'grid';
-  document.getElementById('user-badge').textContent = currentUser;
   document.getElementById('inp-date').value = today();
   loadEntries();
 }
@@ -586,8 +542,8 @@ function renderChart() {
   const isDark  = window.matchMedia('(prefers-color-scheme: dark)').matches;
   const gridCol = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
   const tickCol = isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)';
-  const green   = isDark ? '#3AAA78' : '#1A7A55';
-  const greenFill = isDark ? 'rgba(58,170,120,0.1)' : 'rgba(26,122,85,0.07)';
+  const green   = isDark ? '#6B8EF0' : '#2B4FD4';
+  const greenFill = isDark ? 'rgba(107,142,240,0.1)' : 'rgba(43,79,212,0.07)';
 
   if (chart) { chart.destroy(); chart = null; }
 
@@ -654,7 +610,6 @@ function renderList() {
         <span class="col-date">${formatDate(e.date)}</span>
         <input class="edit-input" id="edit-w-${e.id}" type="number" value="${parseFloat(e.weight).toFixed(2)}" step="0.1" min="20" max="300" />
         ${deltaHtml}
-        <span class="col-who">${e.user_name}</span>
         <input class="edit-note" id="edit-n-${e.id}" type="text" value="${e.note || ''}" maxlength="80" />
         <div class="row-actions">
           <button class="icon-btn" onclick="saveEdit('${e.id}')">✓</button>
@@ -667,7 +622,6 @@ function renderList() {
       <span class="col-date">${formatDate(e.date)}</span>
       <span class="col-weight">${parseFloat(e.weight).toFixed(2)}<span style="font-family:var(--mono);font-size:10px;color:var(--text-faint);"> kg</span></span>
       ${deltaHtml}
-      <span class="col-who">${e.user_name}</span>
       <span class="col-note" title="${e.note || ''}">${e.note || ''}</span>
       <div class="row-actions">
         ${canEdit ? `<button class="icon-btn" onclick="startEdit('${e.id}')">✎</button><button class="icon-btn" onclick="deleteEntry('${e.id}')">✕</button>` : ''}
