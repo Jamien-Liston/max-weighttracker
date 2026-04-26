@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Max">
+<meta name="theme-color" content="#F5F3EE" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141210" media="(prefers-color-scheme: dark)">
+<title>Max WeightTracker</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;1,9..144,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F5F3EE;
+    --surface: #FFFFFF;
+    --surface-2: #EDEBE6;
+    --border: rgba(0,0,0,0.1);
+    --border-strong: rgba(0,0,0,0.18);
+    --text: #1A1814;
+    --text-muted: #7A7670;
+    --text-faint: #B0ADA7;
+    --accent: #2B4FD4;
+    --accent-light: #EEF1FB;
+    --green: #1A7A55;
+    --red: #C0392B;
+    --mono: 'DM Mono', monospace;
+    --serif: 'Fraunces', Georgia, serif;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141210;
+      --surface: #1E1C19;
+      --surface-2: #272420;
+      --border: rgba(255,255,255,0.08);
+      --border-strong: rgba(255,255,255,0.14);
+      --text: #F0EDE8;
+      --text-muted: #8A8780;
+      --text-faint: #504E4A;
+      --accent: #6B8EF0;
+      --accent-light: #1A2040;
+      --green: #3AAA78;
+      --red: #E05B4A;
+    }
+  }
+
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--mono); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+
+  /* Gate */
+  .gate { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+  .gate-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2.5rem 2rem; width: 100%; max-width: 360px; text-align: center; }
+  .gate-logo { font-family: var(--serif); font-size: 48px; color: var(--accent); font-style: italic; margin-bottom: 0.25rem; line-height: 1; }
+  .gate-sub { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 2rem; }
+  .gate-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); text-align: left; margin-bottom: 6px; display: block; }
+  .gate-section { margin-bottom: 1.25rem; }
+  .user-picker { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .user-btn { padding: 12px; border-radius: 8px; border: 1px solid var(--border-strong); background: transparent; color: var(--text-muted); font-family: var(--mono); font-size: 13px; cursor: pointer; transition: all 0.12s; }
+  .user-btn:hover { background: var(--surface-2); color: var(--text); }
+  .user-btn.selected { background: var(--accent-light); border-color: var(--accent); color: var(--accent); font-weight: 500; }
+  .gate-input { width: 100%; height: 40px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface); color: var(--text); font-family: var(--mono); font-size: 14px; padding: 0 12px; outline: none; transition: border-color 0.12s; text-align: center; letter-spacing: 0.1em; }
+  .gate-input:focus { border-color: var(--accent); }
+  .gate-error { font-size: 12px; color: var(--red); margin-top: 8px; min-height: 18px; }
+
+  /* Shell */
+  .shell { min-height: 100vh; display: grid; grid-template-rows: auto 1fr; }
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 1.5rem; padding-top: var(--safe-top); display: flex; align-items: center; justify-content: space-between; height: calc(56px + var(--safe-top)); position: sticky; top: 0; z-index: 10; }
+  .wordmark { display: flex; align-items: baseline; gap: 8px; }
+  .wordmark-max { font-family: var(--serif); font-weight: 500; font-size: 20px; color: var(--accent); letter-spacing: -0.02em; font-style: italic; }
+  .wordmark-sub { font-family: var(--mono); font-size: 11px; color: var(--text-faint); letter-spacing: 0.06em; }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  .user-badge { font-size: 11px; padding: 4px 10px; border-radius: 20px; background: var(--accent-light); color: var(--accent); font-weight: 500; }
+
+  /* Buttons */
+  .btn { display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 10px; border-radius: 6px; font-family: var(--mono); font-size: 11px; cursor: pointer; border: 1px solid var(--border-strong); background: transparent; color: var(--text-muted); transition: background 0.12s, color 0.12s; white-space: nowrap; }
+  .btn:hover { background: var(--surface-2); color: var(--text); }
+  .btn:active { opacity: 0.75; }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn-primary:hover { opacity: 0.88; background: var(--accent); color: #fff; }
+
+  /* Main */
+  main { max-width: 860px; margin: 0 auto; padding: 1.5rem 1.5rem calc(2rem + var(--safe-bottom)); width: 100%; }
+
+  /* Entry bar */
+  .entry-bar { display: flex; gap: 8px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+  .entry-bar input { height: 38px; border: 1px solid var(--border-strong); border-radius: 6px; background: var(--surface); color: var(--text); font-family: var(--mono); font-size: 13px; padding: 0 12px; outline: none; transition: border-color 0.12s; }
+  .entry-bar input:focus { border-color: var(--accent); }
+  #inp-date { width: 148px; }
+  #inp-weight { width: 130px; }
+  #inp-note { flex: 1; min-width: 130px; }
+
+  /* Stats */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 1.25rem; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+  .stat-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 4px; }
+  .stat-value { font-family: var(--serif); font-size: 24px; font-weight: 300; color: var(--text); line-height: 1; }
+  .stat-value.positive { color: var(--red); }
+  .stat-value.negative { color: var(--green); }
+  .stat-unit { font-family: var(--mono); font-size: 10px; color: var(--text-faint); margin-top: 3px; }
+
+  /* View bar */
+  .view-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .tabs { display: flex; background: var(--surface-2); border-radius: 7px; padding: 3px; gap: 2px; }
+  .tab { padding: 5px 14px; border-radius: 5px; font-size: 12px; cursor: pointer; background: transparent; border: none; color: var(--text-muted); font-family: var(--mono); transition: all 0.12s; }
+  .tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .view-meta { display: flex; align-items: center; gap: 10px; }
+  .entry-count { font-size: 11px; color: var(--text-faint); }
+  .filter-select { height: 28px; border: 1px solid var(--border); border-radius: 5px; background: var(--surface); color: var(--text-muted); font-family: var(--mono); font-size: 11px; padding: 0 8px; outline: none; cursor: pointer; }
+
+  /* Chart */
+  .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; }
+  .chart-wrap { position: relative; height: 280px; }
+  .chart-empty { display: flex; align-items: center; justify-content: center; height: 280px; color: var(--text-faint); font-size: 13px; }
+
+  /* List */
+  .list-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .list-header { display: grid; grid-template-columns: 110px 80px 72px 62px 1fr 70px; padding: 8px 16px; background: var(--surface-2); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); border-bottom: 1px solid var(--border); gap: 8px; }
+  .list-row { display: grid; grid-template-columns: 110px 80px 72px 62px 1fr 70px; padding: 10px 16px; border-bottom: 1px solid var(--border); gap: 8px; align-items: center; transition: background 0.1s; }
+  .list-row:last-child { border-bottom: none; }
+  .list-row:hover { background: var(--surface-2); }
+  .col-date { font-size: 12px; color: var(--text-muted); }
+  .col-weight { font-family: var(--serif); font-size: 17px; font-weight: 300; }
+  .col-delta { font-size: 12px; }
+  .col-who { font-size: 11px; color: var(--text-faint); }
+  .col-note { font-size: 12px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .delta-neg { color: var(--green); }
+  .delta-pos { color: var(--red); }
+  .delta-nil { color: var(--text-faint); }
+  .row-actions { display: flex; gap: 4px; justify-content: flex-end; }
+  .icon-btn { background: transparent; border: none; cursor: pointer; color: var(--text-muted); padding: 4px 6px; border-radius: 4px; font-size: 14px; transition: background 0.1s, color 0.1s; }
+  .icon-btn:hover { background: var(--surface-2); color: var(--text); }
+  .edit-input { width: 72px; height: 26px; font-family: var(--mono); font-size: 12px; border: 1px solid var(--accent); border-radius: 4px; padding: 0 6px; background: var(--surface); color: var(--text); outline: none; }
+  .edit-note { width: 100%; height: 26px; font-family: var(--mono); font-size: 12px; border: 1px solid var(--accent); border-radius: 4px; padding: 0 6px; background: var(--surface); color: var(--text); outline: none; }
+
+  /* Sync bar */
+  .sync-bar { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-faint); margin-bottom: 1rem; min-height: 18px; }
+  .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-faint); flex-shrink: 0; }
+  .sync-dot.ok { background: var(--green); }
+  .sync-dot.err { background: var(--red); }
+  .sync-dot.loading { background: var(--accent); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  /* Toast */
+  .toast { position: fixed; bottom: calc(24px + var(--safe-bottom)); left: 50%; transform: translateX(-50%) translateY(80px); background: var(--text); color: var(--bg); font-family: var(--mono); font-size: 12px; padding: 10px 18px; border-radius: 8px; transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1); z-index: 100; white-space: nowrap; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    main { padding: 1rem 1rem calc(2rem + var(--safe-bottom)); }
+    header { padding: 0 1rem; padding-top: var(--safe-top); }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .list-header, .list-row { grid-template-columns: 90px 70px 62px 1fr 60px; }
+    .col-who { display: none; }
+    .list-header span:nth-child(4) { display: none; }
+    .wordmark-sub { display: none; }
+    #inp-date { width: 140px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Gate screen -->
+<div class="gate" id="gate" style="display:none;">
+  <div class="gate-card">
+    <div class="gate-logo">M</div>
+    <div class="gate-sub">WeightTracker</div>
+
+    <div class="gate-section">
+      <span class="gate-label">Who are you?</span>
+      <div class="user-picker">
+        <button class="user-btn" onclick="selectUser('Christine')" id="ubtn-Christine">Christine</button>
+        <button class="user-btn" onclick="selectUser('Jamien')" id="ubtn-Jamien">Jamien</button>
+      </div>
+    </div>
+
+    <div class="gate-section">
+      <span class="gate-label">Passphrase</span>
+      <input class="gate-input" type="password" id="gate-pass" placeholder="••••••••" autocomplete="current-password" />
+      <div class="gate-error" id="gate-error"></div>
+    </div>
+
+    <button class="btn-primary btn" style="width:100%;justify-content:center;height:40px;font-size:13px;" onclick="tryUnlock()">Enter</button>
+  </div>
+</div>
+
+<!-- App -->
+<div class="shell" id="app" style="display:none;">
+  <header>
+    <div class="wordmark">
+      <span class="wordmark-max">Max</span>
+      <span class="wordmark-sub">WeightTracker</span>
+    </div>
+    <div class="header-right">
+      <span class="user-badge" id="user-badge"></span>
+      <button class="btn" onclick="switchUser()">Switch</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="sync-bar">
+      <div class="sync-dot" id="sync-dot"></div>
+      <span id="sync-label">Connecting…</span>
+    </div>
+
+    <div class="entry-bar">
+      <input type="date" id="inp-date" />
+      <input type="number" id="inp-weight" placeholder="Weight (kg)" step="0.1" min="20" max="300" />
+      <input type="text" id="inp-note" placeholder="Note (optional)" maxlength="80" />
+      <button class="btn-primary btn" onclick="addEntry()" style="height:38px;padding:0 16px;font-size:13px;">Add entry</button>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-label">Current</div><div class="stat-value" id="stat-current">–</div><div class="stat-unit">kg</div></div>
+      <div class="stat-card"><div class="stat-label">Starting</div><div class="stat-value" id="stat-start">–</div><div class="stat-unit">kg</div></div>
+      <div class="stat-card"><div class="stat-label">Total change</div><div class="stat-value" id="stat-change">–</div><div class="stat-unit">kg</div></div>
+      <div class="stat-card"><div class="stat-label">Entries</div><div class="stat-value" id="stat-count">0</div><div class="stat-unit">mine</div></div>
+    </div>
+
+    <div class="view-bar">
+      <div class="tabs">
+        <button class="tab active" id="tab-graph" onclick="setView('graph')">Graph</button>
+        <button class="tab" id="tab-list" onclick="setView('list')">List</button>
+      </div>
+      <div class="view-meta">
+        <select class="filter-select" id="filter-who" onchange="render()">
+          <option value="me">My entries</option>
+          <option value="all">Everyone</option>
+        </select>
+        <span class="entry-count" id="entry-count"></span>
+      </div>
+    </div>
+
+    <div id="view-graph">
+      <div class="chart-card">
+        <div class="chart-wrap">
+          <div class="chart-empty" id="chart-empty">Add entries to see your graph</div>
+          <canvas id="weightChart" style="display:none;"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-list" style="display:none;">
+      <div class="list-card">
+        <div class="list-header">
+          <span>Date</span><span>Weight</span><span>Change</span><span>Who</span><span>Note</span><span></span>
+        </div>
+        <div id="list-body"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://ncjmmeefopduoyicmxxa.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_Jrk15_G_F7VAPGPlEyvoPg_ddEKFe8w';
+const PASSPHRASE   = 'maxfamily2025';
+const USERS        = ['Christine', 'Jamien'];
+const USER_COLORS  = {
+  light: { Christine: { line:'#2B4FD4', fill:'rgba(43,79,212,0.07)' }, Jamien: { line:'#1A7A55', fill:'rgba(26,122,85,0.07)' } },
+  dark:  { Christine: { line:'#6B8EF0', fill:'rgba(107,142,240,0.1)' }, Jamien: { line:'#3AAA78', fill:'rgba(58,170,120,0.1)' } }
+};
+
+let currentUser = null;
+let selectedUser = null;
+let entries = [];
+let editingId = null;
+let chart = null;
+let currentView = 'graph';
+
+// ── Supabase ───────────────────────────────────────────
+async function sbFetch(path, options = {}) {
+  const headers = {
+    'apikey': SUPABASE_KEY,
+    'Authorization': 'Bearer ' + SUPABASE_KEY,
+    'Content-Type': 'application/json',
+    ...(options.extraHeaders || {})
+  };
+  const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
+    method: options.method || 'GET',
+    headers,
+    body: options.body || undefined
+  });
+  if (!res.ok) throw new Error(await res.text());
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+// ── Gate ───────────────────────────────────────────────
+function selectUser(name) {
+  selectedUser = name;
+  USERS.forEach(u => document.getElementById('ubtn-' + u).classList.toggle('selected', u === name));
+}
+
+function tryUnlock() {
+  const pass = document.getElementById('gate-pass').value;
+  const err = document.getElementById('gate-error');
+  if (!selectedUser) { err.textContent = 'Please select who you are'; return; }
+  if (pass !== PASSPHRASE) { err.textContent = 'Incorrect passphrase'; return; }
+  err.textContent = '';
+  currentUser = selectedUser;
+  localStorage.setItem('mwt_user', currentUser);
+  localStorage.setItem('mwt_auth', '1');
+  showApp();
+}
+
+function tryAutoLogin() {
+  const auth = localStorage.getItem('mwt_auth');
+  const user = localStorage.getItem('mwt_user');
+  if (auth === '1' && USERS.includes(user)) { currentUser = user; return true; }
+  return false;
+}
+
+function switchUser() {
+  localStorage.removeItem('mwt_auth');
+  localStorage.removeItem('mwt_user');
+  currentUser = selectedUser = null;
+  document.getElementById('gate-pass').value = '';
+  document.getElementById('gate-error').textContent = '';
+  USERS.forEach(u => document.getElementById('ubtn-' + u).classList.remove('selected'));
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('gate').style.display = 'flex';
+}
+
+document.getElementById('gate-pass').addEventListener('keydown', e => { if (e.key === 'Enter') tryUnlock(); });
+
+// ── App ────────────────────────────────────────────────
+function showApp() {
+  document.getElementById('gate').style.display = 'none';
+  document.getElementById('app').style.display = 'grid';
+  document.getElementById('user-badge').textContent = currentUser;
+  document.getElementById('inp-date').value = today();
+  loadEntries();
+}
+
+// ── Data ───────────────────────────────────────────────
+function setSyncState(state, label) {
+  document.getElementById('sync-dot').className = 'sync-dot ' + state;
+  document.getElementById('sync-label').textContent = label;
+}
+
+async function loadEntries() {
+  setSyncState('loading', 'Loading…');
+  try {
+    entries = await sbFetch('entries?select=*&order=date.asc') || [];
+    setSyncState('ok', 'Synced');
+    render();
+  } catch {
+    setSyncState('err', 'Connection error');
+    toast('Could not load data');
+  }
+}
+
+async function addEntry() {
+  const d = document.getElementById('inp-date').value;
+  const w = parseFloat(document.getElementById('inp-weight').value);
+  const n = document.getElementById('inp-note').value.trim();
+  if (!d || isNaN(w) || w < 20 || w > 300) { toast('Enter a valid date and weight'); return; }
+  setSyncState('loading', 'Saving…');
+  try {
+    // Check if entry exists for this user+date
+    const existing = await sbFetch('entries?user_name=eq.' + encodeURIComponent(currentUser) + '&date=eq.' + d);
+    if (existing && existing.length > 0) {
+      // Update existing
+      await sbFetch('entries?id=eq.' + existing[0].id, {
+        method: 'PATCH',
+        body: JSON.stringify({ weight: w, note: n })
+      });
+    } else {
+      // Insert new
+      await sbFetch('entries', {
+        method: 'POST',
+        body: JSON.stringify({ user_name: currentUser, date: d, weight: w, note: n })
+      });
+    }
+    document.getElementById('inp-weight').value = '';
+    document.getElementById('inp-note').value = '';
+    toast('Entry saved');
+    await loadEntries();
+  } catch {
+    setSyncState('err', 'Save failed');
+    toast('Could not save – try again');
+  }
+}
+
+async function deleteEntry(id) {
+  setSyncState('loading', 'Deleting…');
+  try {
+    await sbFetch('entries?id=eq.' + id, { method: 'DELETE' });
+    toast('Deleted');
+    await loadEntries();
+  } catch {
+    setSyncState('err', 'Delete failed');
+    toast('Could not delete');
+  }
+}
+
+function startEdit(id) { editingId = id; renderList(); }
+function cancelEdit() { editingId = null; renderList(); }
+
+async function saveEdit(id) {
+  const w = parseFloat(document.getElementById('edit-w-' + id).value);
+  const n = document.getElementById('edit-n-' + id).value.trim();
+  if (isNaN(w) || w < 20 || w > 300) { toast('Invalid weight'); return; }
+  setSyncState('loading', 'Saving…');
+  try {
+    await sbFetch('entries?id=eq.' + id, { method: 'PATCH', body: JSON.stringify({ weight: w, note: n }) });
+    editingId = null;
+    toast('Updated');
+    await loadEntries();
+  } catch {
+    setSyncState('err', 'Update failed');
+    toast('Could not update');
+  }
+}
+
+// ── Helpers ────────────────────────────────────────────
+function today() { return new Date().toISOString().split('T')[0]; }
+
+function formatDate(d) {
+  const [y, m, day] = d.split('-');
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return parseInt(day) + ' ' + months[parseInt(m) - 1] + ' ' + y;
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+function filtered() {
+  const f = document.getElementById('filter-who').value;
+  return f === 'me' ? entries.filter(e => e.user_name === currentUser) : [...entries];
+}
+
+// ── Stats ──────────────────────────────────────────────
+function updateStats() {
+  const mine = entries.filter(e => e.user_name === currentUser);
+  document.getElementById('stat-count').textContent = mine.length;
+  if (mine.length === 0) {
+    ['stat-current','stat-start','stat-change'].forEach(id => { const el = document.getElementById(id); el.textContent = '–'; el.className = 'stat-value'; });
+    return;
+  }
+  const first = parseFloat(mine[0].weight);
+  const last  = parseFloat(mine[mine.length - 1].weight);
+  const diff  = parseFloat((last - first).toFixed(2));
+  document.getElementById('stat-current').textContent = last.toFixed(2);
+  document.getElementById('stat-start').textContent   = first.toFixed(2);
+  const chEl = document.getElementById('stat-change');
+  chEl.textContent  = (diff > 0 ? '+' : '') + diff.toFixed(2);
+  chEl.className    = 'stat-value' + (diff < 0 ? ' negative' : diff > 0 ? ' positive' : '');
+}
+
+// ── Views ──────────────────────────────────────────────
+function setView(v) {
+  currentView = v;
+  document.getElementById('view-graph').style.display = v === 'graph' ? 'block' : 'none';
+  document.getElementById('view-list').style.display  = v === 'list'  ? 'block' : 'none';
+  document.getElementById('tab-graph').classList.toggle('active', v === 'graph');
+  document.getElementById('tab-list').classList.toggle('active',  v === 'list');
+  if (v === 'graph') renderChart();
+}
+
+// ── Chart ──────────────────────────────────────────────
+function renderChart() {
+  const canvas = document.getElementById('weightChart');
+  const empty  = document.getElementById('chart-empty');
+  const data   = filtered().sort((a,b) => a.date.localeCompare(b.date));
+
+  if (data.length === 0) {
+    canvas.style.display = 'none'; empty.style.display = 'flex';
+    if (chart) { chart.destroy(); chart = null; }
+    return;
+  }
+
+  canvas.style.display = 'block'; empty.style.display = 'none';
+  const isDark   = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const palette  = isDark ? USER_COLORS.dark : USER_COLORS.light;
+  const gridCol  = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
+  const tickCol  = isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)';
+  const showAll  = document.getElementById('filter-who').value === 'all';
+
+  if (chart) { chart.destroy(); chart = null; }
+
+  const baseOpts = {
+    responsive: true, maintainAspectRatio: false, animation: { duration: 250 },
+    scales: {
+      x: { ticks: { color: tickCol, font: { family:"'DM Mono',monospace", size:11 }, maxRotation:40, maxTicksLimit:10 }, grid: { color: gridCol } },
+      y: { ticks: { color: tickCol, font: { family:"'DM Mono',monospace", size:11 }, callback: v => parseFloat(v).toFixed(2)+' kg' }, grid: { color: gridCol } }
+    }
+  };
+
+  let datasets, labels;
+
+  if (showAll) {
+    const allDates = [...new Set(data.map(e => e.date))].sort();
+    labels   = allDates.map(formatDate);
+    datasets = USERS.map(u => {
+      const map = {};
+      data.filter(e => e.user_name === u).forEach(e => map[e.date] = parseFloat(e.weight));
+      const c = palette[u] || { line:'#888', fill:'rgba(0,0,0,0.05)' };
+      return { label: u, data: allDates.map(d => map[d] ?? null), borderColor: c.line, backgroundColor: c.fill, pointBackgroundColor: c.line, pointRadius: 4, pointHoverRadius: 6, borderWidth: 2, fill: false, tension: 0.35, spanGaps: false };
+    });
+    baseOpts.plugins = { legend: { display: true, labels: { color: tickCol, font: { family:"'DM Mono',monospace", size:11 }, boxWidth:12, padding:16 } } };
+  } else {
+    labels   = data.map(e => formatDate(e.date));
+    const c  = palette[currentUser] || { line:'#2B4FD4', fill:'rgba(43,79,212,0.07)' };
+    datasets = [{ data: data.map(e => parseFloat(e.weight)), borderColor: c.line, backgroundColor: c.fill, pointBackgroundColor: c.line, pointRadius: data.length > 60 ? 2 : 5, pointHoverRadius: 7, borderWidth: 2, fill: true, tension: 0.35 }];
+    baseOpts.plugins = {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: isDark ? '#2A2724' : '#1A1814', titleColor: isDark ? '#F0EDE8' : '#F5F3EE', bodyColor: isDark ? '#8A8780' : '#7A7670', padding:10, cornerRadius:6,
+        callbacks: {
+          label: ctx => { const e = data[ctx.dataIndex]; let s = parseFloat(ctx.parsed.y).toFixed(2)+' kg'; if (e?.note) s += '  –  '+e.note; return s; }
+        }
+      }
+    };
+  }
+
+  chart = new Chart(canvas.getContext('2d'), { type:'line', data:{ labels, datasets }, options: baseOpts });
+}
+
+// ── List ───────────────────────────────────────────────
+function renderList() {
+  const body = document.getElementById('list-body');
+  const data = filtered().sort((a,b) => b.date.localeCompare(a.date));
+  document.getElementById('entry-count').textContent = data.length ? data.length + (data.length === 1 ? ' entry' : ' entries') : '';
+
+  if (data.length === 0) { body.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text-faint);font-size:13px;">No entries yet</div>'; return; }
+
+  body.innerHTML = data.map((e, i) => {
+    const prevSameUser = data.slice(i + 1).find(x => x.user_name === e.user_name);
+    const delta = prevSameUser ? parseFloat((parseFloat(e.weight) - parseFloat(prevSameUser.weight)).toFixed(2)) : null;
+    const deltaHtml = delta === null
+      ? '<span class="col-delta delta-nil">–</span>'
+      : `<span class="col-delta ${delta < 0 ? 'delta-neg' : delta > 0 ? 'delta-pos' : 'delta-nil'}">${delta > 0 ? '+' : ''}${delta.toFixed(2)}</span>`;
+
+    const canEdit = e.user_name === currentUser;
+
+    if (editingId === e.id) {
+      return `<div class="list-row">
+        <span class="col-date">${formatDate(e.date)}</span>
+        <input class="edit-input" id="edit-w-${e.id}" type="number" value="${parseFloat(e.weight).toFixed(2)}" step="0.1" min="20" max="300" />
+        ${deltaHtml}
+        <span class="col-who">${e.user_name}</span>
+        <input class="edit-note" id="edit-n-${e.id}" type="text" value="${e.note || ''}" maxlength="80" />
+        <div class="row-actions">
+          <button class="icon-btn" onclick="saveEdit('${e.id}')">✓</button>
+          <button class="icon-btn" onclick="cancelEdit()">✕</button>
+        </div>
+      </div>`;
+    }
+
+    return `<div class="list-row">
+      <span class="col-date">${formatDate(e.date)}</span>
+      <span class="col-weight">${parseFloat(e.weight).toFixed(2)}<span style="font-family:var(--mono);font-size:10px;color:var(--text-faint);"> kg</span></span>
+      ${deltaHtml}
+      <span class="col-who">${e.user_name}</span>
+      <span class="col-note" title="${e.note || ''}">${e.note || ''}</span>
+      <div class="row-actions">
+        ${canEdit ? `<button class="icon-btn" onclick="startEdit('${e.id}')">✎</button><button class="icon-btn" onclick="deleteEntry('${e.id}')">✕</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Render ─────────────────────────────────────────────
+function render() {
+  updateStats();
+  if (currentView === 'graph') renderChart();
+  renderList();
+}
+
+document.addEventListener('keydown', e => {
+  if ((e.target.id === 'inp-weight' || e.target.id === 'inp-note') && e.key === 'Enter') addEntry();
+});
+
+// ── Boot ───────────────────────────────────────────────
+if (tryAutoLogin()) {
+  showApp();
+} else {
+  document.getElementById('gate').style.display = 'flex';
+}
+</script>
+</body>
+</html>
