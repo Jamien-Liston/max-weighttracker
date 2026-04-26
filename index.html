@@ -227,10 +227,10 @@
         <button class="tab" id="tab-list" onclick="setView('list')">List</button>
       </div>
       <div class="view-meta">
-        <select class="filter-select" id="filter-who" onchange="render()">
-          <option value="me">My entries</option>
-          <option value="all">Everyone</option>
-        </select>
+        
+          
+          
+        
         <span class="entry-count" id="entry-count"></span>
       </div>
     </div>
@@ -437,8 +437,7 @@ function toast(msg) {
 }
 
 function filtered() {
-  const f = document.getElementById('filter-who').value;
-  return f === 'me' ? entries.filter(e => e.user_name === currentUser) : [...entries];
+  return [...entries];
 }
 
 // ── Stats ──────────────────────────────────────────────
@@ -584,61 +583,51 @@ function renderChart() {
   }
 
   canvas.style.display = 'block'; empty.style.display = 'none';
-  const isDark   = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const palette  = isDark ? USER_COLORS.dark : USER_COLORS.light;
-  const gridCol  = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
-  const tickCol  = isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)';
-  const showAll  = document.getElementById('filter-who').value === 'all';
+  const isDark  = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const gridCol = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
+  const tickCol = isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)';
+  const green   = isDark ? '#3AAA78' : '#1A7A55';
+  const greenFill = isDark ? 'rgba(58,170,120,0.1)' : 'rgba(26,122,85,0.07)';
 
   if (chart) { chart.destroy(); chart = null; }
 
+  const labels = data.map(e => formatDate(e.date));
+  const userDataset = {
+    label: 'Max',
+    data: data.map(e => parseFloat(e.weight)),
+    borderColor: green, backgroundColor: greenFill, pointBackgroundColor: green,
+    pointRadius: data.length > 60 ? 2 : 5, pointHoverRadius: 7,
+    borderWidth: 2, fill: true, tension: 0.35
+  };
+  const datasets = [userDataset, ...percentileDatasets(data.map(e => e.date), isDark)];
+
   const baseOpts = {
     responsive: true, maintainAspectRatio: false, animation: { duration: 250 },
-    scales: {
-      x: { ticks: { color: tickCol, font: { family:"'DM Mono',monospace", size:11 }, maxRotation:40, maxTicksLimit:10 }, grid: { color: gridCol } },
-      y: { ticks: { color: tickCol, font: { family:"'DM Mono',monospace", size:11 }, callback: v => parseFloat(v).toFixed(2)+' kg' }, grid: { color: gridCol } }
-    }
-  };
-
-  let datasets, labels;
-
-  if (showAll) {
-    const allDates = [...new Set(data.map(e => e.date))].sort();
-    labels   = allDates.map(formatDate);
-    datasets = USERS.map(u => {
-      const map = {};
-      data.filter(e => e.user_name === u).forEach(e => map[e.date] = parseFloat(e.weight));
-      const c = palette[u] || { line:'#888', fill:'rgba(0,0,0,0.05)' };
-      return { label: u, data: allDates.map(d => map[d] ?? null), borderColor: c.line, backgroundColor: c.fill, pointBackgroundColor: c.line, pointRadius: 4, pointHoverRadius: 6, borderWidth: 2, fill: false, tension: 0.35, spanGaps: false };
-    });
-    datasets = [...datasets, ...percentileDatasets(allDates, isDark)];
-    baseOpts.plugins = { legend: { display: true, labels: { color: tickCol, font: { family:"'DM Mono',monospace", size:11 }, boxWidth:12, padding:16 } } };
-  } else {
-    labels   = data.map(e => formatDate(e.date));
-    const c  = palette[currentUser] || { line:'#2B4FD4', fill:'rgba(43,79,212,0.07)' };
-    const userDataset = { label: currentUser, data: data.map(e => parseFloat(e.weight)), borderColor: c.line, backgroundColor: c.fill, pointBackgroundColor: c.line, pointRadius: data.length > 60 ? 2 : 5, pointHoverRadius: 7, borderWidth: 2, fill: true, tension: 0.35 };
-    const pDates = data.map(e => e.date);
-    datasets = [userDataset, ...percentileDatasets(pDates, isDark)];
-    baseOpts.plugins = {
+    plugins: {
       legend: { display: true, labels: { color: tickCol, font: { family:"'DM Mono',monospace", size:11 }, boxWidth:12, padding:14,
-        filter: item => item.text !== currentUser  // hide user name from legend in solo view, percentiles only
+        filter: item => item.text !== 'Max'
       }},
       tooltip: {
-        backgroundColor: isDark ? '#2A2724' : '#1A1814', titleColor: isDark ? '#F0EDE8' : '#F5F3EE', bodyColor: isDark ? '#8A8780' : '#7A7670', padding:10, cornerRadius:6,
+        backgroundColor: isDark ? '#2A2724' : '#1A1814', titleColor: isDark ? '#F0EDE8' : '#F5F3EE',
+        bodyColor: isDark ? '#8A8780' : '#7A7670', padding:10, cornerRadius:6,
         callbacks: {
           label: ctx => {
             if (ctx.dataset.label === '25th percentile' || ctx.dataset.label === '10th percentile') {
               return ctx.dataset.label + ': ' + parseFloat(ctx.parsed.y).toFixed(2) + ' kg';
             }
             const e = data[ctx.dataIndex];
-            let s = parseFloat(ctx.parsed.y).toFixed(2)+' kg';
-            if (e?.note) s += '  –  '+e.note;
+            let s = parseFloat(ctx.parsed.y).toFixed(2) + ' kg';
+            if (e?.note) s += '  –  ' + e.note;
             return s;
           }
         }
       }
-    };
-  }
+    },
+    scales: {
+      x: { ticks: { color: tickCol, font: { family:"'DM Mono',monospace", size:11 }, maxRotation:40, maxTicksLimit:10 }, grid: { color: gridCol } },
+      y: { ticks: { color: tickCol, font: { family:"'DM Mono',monospace", size:11 }, callback: v => parseFloat(v).toFixed(2)+' kg' }, grid: { color: gridCol } }
+    }
+  };
 
   chart = new Chart(canvas.getContext('2d'), { type:'line', data:{ labels, datasets }, options: baseOpts });
 }
@@ -646,7 +635,7 @@ function renderChart() {
 // ── List ───────────────────────────────────────────────
 function renderList() {
   const body = document.getElementById('list-body');
-  const data = filtered().sort((a,b) => b.date.localeCompare(a.date));
+  const data = [...entries].sort((a,b) => b.date.localeCompare(a.date));
   document.getElementById('entry-count').textContent = data.length ? data.length + (data.length === 1 ? ' entry' : ' entries') : '';
 
   if (data.length === 0) { body.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text-faint);font-size:13px;">No entries yet</div>'; return; }
