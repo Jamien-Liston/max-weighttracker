@@ -124,7 +124,7 @@
   .delta-neg { color: var(--green); }
   .delta-pos { color: var(--red); }
   .delta-nil { color: var(--text-faint); }
-  .row-actions { display: flex; gap: 4px; justify-content: flex-end; }
+  .row-actions { display: flex; gap: 12px; justify-content: flex-end; }
   .icon-btn { background: transparent; border: none; cursor: pointer; color: var(--text-muted); padding: 4px 6px; border-radius: 4px; font-size: 14px; transition: background 0.1s, color 0.1s; }
   .icon-btn:hover { background: var(--surface-2); color: var(--text); }
   .edit-input { width: 72px; height: 26px; font-family: var(--mono); font-size: 12px; border: 1px solid var(--accent); border-radius: 4px; padding: 0 6px; background: var(--surface); color: var(--text); outline: none; }
@@ -198,7 +198,7 @@
       <div class="stat-card"><div class="stat-label">Current</div><div class="stat-value" id="stat-current">–</div><div class="stat-unit">kg</div></div>
       <div class="stat-card"><div class="stat-label">Starting</div><div class="stat-value" id="stat-start">–</div><div class="stat-unit">kg</div></div>
       <div class="stat-card"><div class="stat-label">Total change</div><div class="stat-value" id="stat-change">–</div><div class="stat-unit">kg</div></div>
-      <div class="stat-card"><div class="stat-label">Entries</div><div class="stat-value" id="stat-count">0</div><div class="stat-unit">mine</div></div>
+      <div class="stat-card"><div class="stat-label">Entries</div><div class="stat-value" id="stat-count">0</div><div class="stat-unit">recorded</div></div>
     </div>
 
     <div class="view-bar">
@@ -398,7 +398,7 @@ function filtered() {
 
 // ── Stats ──────────────────────────────────────────────
 function updateStats() {
-  const mine = entries.filter(e => e.user_name === currentUser);
+  const mine = [...entries].sort((a,b) => a.date.localeCompare(b.date));
   document.getElementById('stat-count').textContent = mine.length;
   if (mine.length === 0) {
     ['stat-current','stat-start','stat-change'].forEach(id => { const el = document.getElementById(id); el.textContent = '–'; el.className = 'stat-value'; });
@@ -603,8 +603,6 @@ function renderList() {
       ? '<span class="col-delta delta-nil">–</span>'
       : `<span class="col-delta ${delta < 0 ? 'delta-neg' : delta > 0 ? 'delta-pos' : 'delta-nil'}">${delta > 0 ? '+' : ''}${delta.toFixed(2)}</span>`;
 
-    const canEdit = e.user_name === currentUser;
-
     if (editingId === e.id) {
       return `<div class="list-row">
         <span class="col-date">${formatDate(e.date)}</span>
@@ -624,7 +622,8 @@ function renderList() {
       ${deltaHtml}
       <span class="col-note" title="${e.note || ''}">${e.note || ''}</span>
       <div class="row-actions">
-        ${canEdit ? `<button class="icon-btn" onclick="startEdit('${e.id}')">✎</button><button class="icon-btn" onclick="deleteEntry('${e.id}')">✕</button>` : ''}
+        <button class="icon-btn" onclick="startEdit('${e.id}')">✎</button>
+        <button class="icon-btn" onclick="deleteEntry('${e.id}')">✕</button>
       </div>
     </div>`;
   }).join('');
