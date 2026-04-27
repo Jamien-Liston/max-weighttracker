@@ -141,10 +141,10 @@
 
   /* Responsive */
   @media (max-width: 600px) {
-    main { padding: 1rem 1rem calc(2rem + var(--safe-bottom)); }
+    main { padding: 1rem 0.75rem calc(2rem + var(--safe-bottom)); }
     header { padding: 0 1rem; padding-top: var(--safe-top); }
     .stats-row { grid-template-columns: repeat(2, 1fr); }
-    .list-header, .list-row { grid-template-columns: 90px 70px 62px 1fr; }
+    .list-header, .list-row { grid-template-columns: 80px 65px 55px 1fr; }
     .wordmark-sub { display: none; }
     #inp-date { width: 140px; }
   }
@@ -253,7 +253,6 @@ let currentView = 'graph';
 async function sbFetch(path, options = {}) {
   const headers = {
     'apikey': SUPABASE_KEY,
-    'Authorization': 'Bearer ' + SUPABASE_KEY,
     'Content-Type': 'application/json',
     ...(options.extraHeaders || {})
   };
@@ -321,13 +320,13 @@ async function addEntry() {
       // Update existing
       await sbFetch('entries?id=eq.' + existing[0].id, {
         method: 'PATCH',
-        body: JSON.stringify({ weight: w, note: n })
+        body: JSON.stringify({ weight: w,note: '' })
       });
     } else {
       // Insert new
       await sbFetch('entries', {
         method: 'POST',
-        body: JSON.stringify({ user_name: currentUser, date: d, weight: w, note: n })
+        body: JSON.stringify({ user_name: currentUser, date: d, weight: w,note: '' })
       });
     }
     document.getElementById('inp-weight').value = '';
@@ -360,7 +359,7 @@ async function saveEdit(id) {
   if (isNaN(w) || w < 20 || w > 300) { toast('Invalid weight'); return; }
   setSyncState('loading', 'Saving…');
   try {
-    await sbFetch('entries?id=eq.' + id, { method: 'PATCH', body: JSON.stringify({ weight: w, note: n }) });
+    await sbFetch('entries?id=eq.' + id, { method: 'PATCH', body: JSON.stringify({ weight: w,note: '' }) });
     editingId = null;
     toast('Updated');
     await loadEntries();
