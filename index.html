@@ -320,13 +320,13 @@ async function addEntry() {
       // Update existing
       await sbFetch('entries?id=eq.' + existing[0].id, {
         method: 'PATCH',
-        body: JSON.stringify({ weight: w, note: n })
+        body: JSON.stringify({ weight: w,note: '' })
       });
     } else {
       // Insert new
       await sbFetch('entries', {
         method: 'POST',
-        body: JSON.stringify({ user_name: currentUser, date: d, weight: w, note: n })
+        body: JSON.stringify({ user_name: currentUser, date: d, weight: w,note: '' })
       });
     }
     document.getElementById('inp-weight').value = '';
@@ -359,7 +359,7 @@ async function saveEdit(id) {
   if (isNaN(w) || w < 20 || w > 300) { toast('Invalid weight'); return; }
   setSyncState('loading', 'Saving…');
   try {
-    await sbFetch('entries?id=eq.' + id, { method: 'PATCH', body: JSON.stringify({ weight: w, note: n }) });
+    await sbFetch('entries?id=eq.' + id, { method: 'PATCH', body: JSON.stringify({ weight: w,note: '' }) });
     editingId = null;
     toast('Updated');
     await loadEntries();
