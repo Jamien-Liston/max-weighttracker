@@ -526,7 +526,7 @@ function isOnTrack(curr, prev) {
   // Gap is the distance below the 10th percentile.
   // Negative gap means at or above the line – both states handled below.
   const change = gapPrev - gapNow; // positive = gap shrinking (good)
-  const threshold = 0.01; // kg
+  const threshold = 0.05; // kg
   if (change > threshold) return 'green';
   if (change < -threshold) return 'red';
   return 'amber';
@@ -617,11 +617,11 @@ function renderList() {
   body.innerHTML = data.map((e, i) => {
     const prevSameUser = data.slice(i + 1).find(x => x.user_name === e.user_name);
     const delta = prevSameUser ? parseFloat((parseFloat(e.weight) - parseFloat(prevSameUser.weight)).toFixed(2)) : null;
-    const onTrack = prevSameUser ? isOnTrack(e, prevSameUser) : null;
-    const deltaClass = onTrack === 'green' ? 'delta-pos' : onTrack === 'red' ? 'delta-neg' : onTrack === 'amber' ? 'delta-amber' : 'delta-nil';
+    // List colouring: pure weight movement. Gain=green, loss=red, flat=amber. Cusp defaults to worse.
+    const listClass = delta === null ? 'delta-nil' : delta > 0 ? 'delta-pos' : delta < 0 ? 'delta-neg' : 'delta-amber';
     const deltaHtml = delta === null
       ? '<span class="col-delta delta-nil">–</span>'
-      : `<span class="col-delta ${deltaClass}">${delta > 0 ? '+' : ''}${delta.toFixed(2)}</span>`;
+      : `<span class="col-delta ${listClass}">${delta > 0 ? '+' : ''}${delta.toFixed(2)}</span>`;
 
     if (editingId === e.id) {
       return `<div class="list-row">
