@@ -410,7 +410,7 @@ function updateStats() {
   const chEl = document.getElementById('stat-change');
   chEl.textContent  = (diff > 0 ? '+' : '') + diff.toFixed(2);
   // Green only if gained weight AND closing gap to 10th percentile vs starting entry
-  const onTrack = isOnTrack(mine[mine.length - 1], mine[0]);
+  const onTrack = mine.length >= 2 ? isOnTrack(mine[mine.length - 1], mine[mine.length - 2]) : null;
   chEl.className = 'stat-value' + (onTrack === 'green' ? ' positive' : onTrack === 'red' ? ' negative' : onTrack === 'amber' ? ' amber' : '');
 }
 
@@ -525,7 +525,7 @@ function isOnTrack(curr, prev) {
   const gapPrev = p10ForDate(prev.date) - parseFloat(prev.weight);
   if (gapNow <= 0) return 'green'; // at or above 10th percentile
   const change = gapPrev - gapNow; // positive = gap shrinking
-  const threshold = 0.05; // kg – within this is considered flat
+  const threshold = 0.01; // kg – within this is considered flat
   if (change > threshold) return 'green';
   if (change < -threshold) return 'red';
   return 'amber';
