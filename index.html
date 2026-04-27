@@ -141,10 +141,10 @@
 
   /* Responsive */
   @media (max-width: 600px) {
-    main { padding: 1rem 1rem calc(2rem + var(--safe-bottom)); }
+    main { padding: 1rem 0.75rem calc(2rem + var(--safe-bottom)); }
     header { padding: 0 1rem; padding-top: var(--safe-top); }
     .stats-row { grid-template-columns: repeat(2, 1fr); }
-    .list-header, .list-row { grid-template-columns: 90px 70px 62px 1fr; }
+    .list-header, .list-row { grid-template-columns: 80px 65px 55px 1fr; }
     .wordmark-sub { display: none; }
     #inp-date { width: 140px; }
   }
@@ -253,7 +253,6 @@ let currentView = 'graph';
 async function sbFetch(path, options = {}) {
   const headers = {
     'apikey': SUPABASE_KEY,
-    'Authorization': 'Bearer ' + SUPABASE_KEY,
     'Content-Type': 'application/json',
     ...(options.extraHeaders || {})
   };
