@@ -101,7 +101,7 @@
   .stat-unit { font-family: var(--mono); font-size: 10px; color: var(--text-faint); margin-top: 3px; }
 
   /* View bar */
-  .view-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; margin-top: 1.5rem; }
+  .view-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; margin-top: 2.5rem; }
   .tabs { display: flex; background: var(--surface-2); border-radius: 7px; padding: 3px; gap: 2px; width: 100%; }
   .tab { flex: 1; padding: 5px 14px; border-radius: 5px; font-size: 12px; cursor: pointer; background: transparent; border: none; color: var(--text-muted); font-family: var(--mono); transition: all 0.12s; text-align: center; }
   .tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
@@ -539,8 +539,8 @@ function percentileDatasets(dates, isDark) {
   const p3xy  = dates.map((d, i) => ({ x: d, y: p3vals[i] }));
   const p10xy = dates.map((d, i) => ({ x: d, y: p10vals[i] }));
   return [
-    { label: '25th percentile',  data: p3xy,  borderColor: p3Color,  backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [5,4], pointRadius: 0, tension: 0.35, fill: false, spanGaps: true },
-    { label: '10th percentile', data: p10xy, borderColor: p10Color, backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [5,4], pointRadius: 0, tension: 0.35, fill: false, spanGaps: true }
+    { label: '10th percentile', data: p10xy, borderColor: p10Color, backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [5,4], pointRadius: 0, tension: 0.35, fill: false, spanGaps: true },
+    { label: '25th percentile',  data: p3xy,  borderColor: p3Color,  backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [5,4], pointRadius: 0, tension: 0.35, fill: false, spanGaps: true }
   ];
 }
 
