@@ -27,6 +27,7 @@
     --accent: #2B4FD4;
     --accent-light: #EEF1FB;
     --green: #1A7A55;
+    --amber: #B06800;
     --red: #C0392B;
     --mono: 'DM Mono', monospace;
     --serif: 'Fraunces', Georgia, serif;
@@ -47,6 +48,7 @@
       --accent: #6B8EF0;
       --accent-light: #1A2040;
       --green: #3AAA78;
+      --amber: #E09000;
       --red: #E05B4A;
     }
   }
@@ -94,6 +96,7 @@
   .stat-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 4px; }
   .stat-value { font-family: var(--serif); font-size: 24px; font-weight: 300; color: var(--text); line-height: 1; }
   .stat-value.positive { color: var(--green); }
+  .stat-value.amber { color: var(--amber); }
   .stat-value.negative { color: var(--red); }
   .stat-unit { font-family: var(--mono); font-size: 10px; color: var(--text-faint); margin-top: 3px; }
 
@@ -120,6 +123,7 @@
   .col-date { font-size: 12px; color: var(--text-muted); }
   .col-weight { font-family: var(--serif); font-size: 17px; font-weight: 300; }
   .col-delta { font-size: 12px; }
+  .delta-amber { color: var(--amber); }
   .delta-neg { color: var(--red); }
   .delta-pos { color: var(--green); }
   .delta-nil { color: var(--text-faint); }
@@ -405,7 +409,9 @@ function updateStats() {
   document.getElementById('stat-start').textContent   = first.toFixed(2);
   const chEl = document.getElementById('stat-change');
   chEl.textContent  = (diff > 0 ? '+' : '') + diff.toFixed(2);
-  chEl.className    = 'stat-value' + (diff < 0 ? ' negative' : diff > 0 ? ' positive' : '');
+  // Green only if gained weight AND closing gap to 10th percentile vs starting entry
+  const onTrack = isOnTrack(mine[mine.length - 1], mine[0]);
+  chEl.className = 'stat-value' + (onTrack === 'green' ? ' positive' : onTrack === 'red' ? ' negative' : onTrack === 'amber' ? ' amber' : '');
 }
 
 // ── Views ──────────────────────────────────────────────
@@ -507,6 +513,24 @@ function weightAtZ(lms, z) {
   return lms.M * Math.pow(1 + lms.L * lms.S * z, 1 / lms.L);
 }
 
+function p10ForDate(dateStr) {
+  const lms = getLMS(ageInMonths(dateStr));
+  return lms ? weightAtZ(lms, Z_P10) : null;
+}
+
+// Returns true if weight increased AND gap to 10th percentile shrunk vs previous entry
+function isOnTrack(curr, prev) {
+  if (!prev) return null;
+  const gapNow  = p10ForDate(curr.date) - parseFloat(curr.weight);
+  const gapPrev = p10ForDate(prev.date) - parseFloat(prev.weight);
+  if (gapNow <= 0) return 'green'; // at or above 10th percentile
+  const change = gapPrev - gapNow; // positive = gap shrinking
+  const threshold = 0.05; // kg – within this is considered flat
+  if (change > threshold) return 'green';
+  if (change < -threshold) return 'red';
+  return 'amber';
+}
+
 function percentileDatasets(dates, isDark) {
   const p3Color  = isDark ? 'rgba(220,80,60,0.7)'  : 'rgba(192,57,43,0.6)';
   const p10Color = isDark ? 'rgba(230,160,40,0.7)' : 'rgba(180,120,0,0.6)';
@@ -592,9 +616,11 @@ function renderList() {
   body.innerHTML = data.map((e, i) => {
     const prevSameUser = data.slice(i + 1).find(x => x.user_name === e.user_name);
     const delta = prevSameUser ? parseFloat((parseFloat(e.weight) - parseFloat(prevSameUser.weight)).toFixed(2)) : null;
+    const onTrack = prevSameUser ? isOnTrack(e, prevSameUser) : null;
+    const deltaClass = onTrack === 'green' ? 'delta-pos' : onTrack === 'red' ? 'delta-neg' : onTrack === 'amber' ? 'delta-amber' : 'delta-nil';
     const deltaHtml = delta === null
       ? '<span class="col-delta delta-nil">–</span>'
-      : `<span class="col-delta ${delta < 0 ? 'delta-neg' : delta > 0 ? 'delta-pos' : 'delta-nil'}">${delta > 0 ? '+' : ''}${delta.toFixed(2)}</span>`;
+      : `<span class="col-delta ${deltaClass}">${delta > 0 ? '+' : ''}${delta.toFixed(2)}</span>`;
 
     if (editingId === e.id) {
       return `<div class="list-row">
