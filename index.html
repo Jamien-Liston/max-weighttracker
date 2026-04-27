@@ -230,7 +230,7 @@
         <div id="list-body"></div>
       </div>
     </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;"><span class="entry-count" id="entry-count"></span><span style="font-family:var(--mono);font-size:11px;color:var(--text-faint);">v0.13</span></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;"><span class="entry-count" id="entry-count"></span><span style="font-family:var(--mono);font-size:11px;color:var(--text-faint);">v0.14</span></div>
   </main>
 </div>
 
@@ -239,7 +239,7 @@
 <script>
 const SUPABASE_URL = 'https://ncjmmeefopduoyicmxxa.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_Jrk15_G_F7VAPGPlEyvoPg_ddEKFe8w';
-const PASSPHRASE   = 'maxfamily2025';
+const PASSPHRASE   = 'bunnymax';
 const USERS        = ['Christine', 'Jamien'];
 const USER_COLORS  = {
   light: { Christine: { line:'#2B4FD4', fill:'rgba(43,79,212,0.07)' }, Jamien: { line:'#1A7A55', fill:'rgba(26,122,85,0.07)' } },
@@ -342,6 +342,9 @@ async function addEntry() {
 }
 
 async function deleteEntry(id) {
+  const entry = entries.find(e => e.id === id);
+  const label = entry ? formatDate(entry.date) + ' – ' + parseFloat(entry.weight).toFixed(2) + ' kg' : 'this entry';
+  if (!confirm('Delete ' + label + '?')) return;
   setSyncState('loading', 'Deleting…');
   try {
     await sbFetch('entries?id=eq.' + id, { method: 'DELETE' });
