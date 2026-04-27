@@ -84,14 +84,14 @@
   main { max-width: 860px; margin: 0 auto; padding: 1.5rem 1.5rem calc(2rem + var(--safe-bottom)); width: 100%; }
 
   /* Entry bar */
-  .entry-bar { display: flex; gap: 8px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+  .entry-bar { display: flex; gap: 8px; margin-bottom: 1.25rem; }
   .entry-bar input { height: 38px; border: 1px solid var(--border-strong); border-radius: 6px; background: var(--surface); color: var(--text); font-family: var(--mono); font-size: 13px; padding: 0 12px; outline: none; transition: border-color 0.12s; }
   .entry-bar input:focus { border-color: var(--accent); }
-  #inp-date { width: 148px; }
-  #inp-weight { width: 130px; }
+  #inp-date { flex: 1; min-width: 120px; }
+  #inp-weight { flex: 1; min-width: 100px; }
 
   /* Stats */
-  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 1.25rem; }
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 1.25rem; }
   .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
   .stat-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 4px; }
   .stat-value { font-family: var(--serif); font-size: 24px; font-weight: 300; color: var(--text); line-height: 1; }
@@ -101,9 +101,9 @@
   .stat-unit { font-family: var(--mono); font-size: 10px; color: var(--text-faint); margin-top: 3px; }
 
   /* View bar */
-  .view-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
-  .tabs { display: flex; background: var(--surface-2); border-radius: 7px; padding: 3px; gap: 2px; }
-  .tab { padding: 5px 14px; border-radius: 5px; font-size: 12px; cursor: pointer; background: transparent; border: none; color: var(--text-muted); font-family: var(--mono); transition: all 0.12s; }
+  .view-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; margin-top: 1.5rem; }
+  .tabs { display: flex; background: var(--surface-2); border-radius: 7px; padding: 3px; gap: 2px; width: 100%; }
+  .tab { flex: 1; padding: 5px 14px; border-radius: 5px; font-size: 12px; cursor: pointer; background: transparent; border: none; color: var(--text-muted); font-family: var(--mono); transition: all 0.12s; text-align: center; }
   .tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
   .view-meta { display: flex; align-items: center; gap: 10px; }
   .entry-count { font-size: 11px; color: var(--text-faint); }
@@ -148,10 +148,8 @@
   @media (max-width: 600px) {
     main { padding: 1rem 0.75rem calc(2rem + var(--safe-bottom)); }
     header { padding: 0 1rem; padding-top: var(--safe-top); }
-    .stats-row { grid-template-columns: repeat(2, 1fr); }
     .list-header, .list-row { grid-template-columns: 80px 65px 55px 1fr; }
     .wordmark-sub { display: none; }
-    #inp-date { width: 140px; }
   }
 </style>
 </head>
@@ -199,7 +197,6 @@
       <div class="stat-card"><div class="stat-label">Current</div><div class="stat-value" id="stat-current">–</div><div class="stat-unit">kg</div></div>
       <div class="stat-card"><div class="stat-label">Starting</div><div class="stat-value" id="stat-start">–</div><div class="stat-unit">kg</div></div>
       <div class="stat-card"><div class="stat-label">Total change</div><div class="stat-value" id="stat-change">–</div><div class="stat-unit">kg</div></div>
-      <div class="stat-card"><div class="stat-label">Entries</div><div class="stat-value" id="stat-count">0</div><div class="stat-unit">recorded</div></div>
     </div>
 
     <div class="view-bar">
@@ -212,7 +209,6 @@
           
           
         
-        <span class="entry-count" id="entry-count"></span>
       </div>
     </div>
 
@@ -222,6 +218,7 @@
           <div class="chart-empty" id="chart-empty">Add entries to see your graph</div>
           <canvas id="weightChart" style="display:none;"></canvas>
         </div>
+
       </div>
     </div>
 
@@ -233,6 +230,7 @@
         <div id="list-body"></div>
       </div>
     </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;"><span class="entry-count" id="entry-count"></span><span style="font-family:var(--mono);font-size:11px;color:var(--text-faint);">v0.10</span></div>
   </main>
 </div>
 
@@ -397,7 +395,6 @@ function filtered() {
 // ── Stats ──────────────────────────────────────────────
 function updateStats() {
   const mine = [...entries].sort((a,b) => a.date.localeCompare(b.date));
-  document.getElementById('stat-count').textContent = mine.length;
   if (mine.length === 0) {
     ['stat-current','stat-start','stat-change'].forEach(id => { const el = document.getElementById(id); el.textContent = '–'; el.className = 'stat-value'; });
     return;
