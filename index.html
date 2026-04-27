@@ -513,19 +513,20 @@ function weightAtZ(lms, z) {
   return lms.M * Math.pow(1 + lms.L * lms.S * z, 1 / lms.L);
 }
 
-function p10ForDate(dateStr) {
+function p25ForDate(dateStr) {
   const lms = getLMS(ageInMonths(dateStr));
-  return lms ? weightAtZ(lms, Z_P10) : null;
+  return lms ? weightAtZ(lms, Z_P3) : null;
 }
 
 // Returns true if weight increased AND gap to 10th percentile shrunk vs previous entry
 function isOnTrack(curr, prev) {
   if (!prev) return null;
-  const gapNow  = p10ForDate(curr.date) - parseFloat(curr.weight);
-  const gapPrev = p10ForDate(prev.date) - parseFloat(prev.weight);
-  if (gapNow <= 0) return 'green'; // at or above 10th percentile
-  const change = gapPrev - gapNow; // positive = gap shrinking
-  const threshold = 0.01; // kg – within this is considered flat
+  const gapNow  = p25ForDate(curr.date) - parseFloat(curr.weight);
+  const gapPrev = p25ForDate(prev.date) - parseFloat(prev.weight);
+  // Gap is the distance below the 10th percentile.
+  // Negative gap means at or above the line – both states handled below.
+  const change = gapPrev - gapNow; // positive = gap shrinking (good)
+  const threshold = 0.01; // kg
   if (change > threshold) return 'green';
   if (change < -threshold) return 'red';
   return 'amber';
