@@ -10,6 +10,7 @@
 <meta name="theme-color" content="#141210" media="(prefers-color-scheme: dark)">
 <title>Max WeightTracker</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;1,9..144,300&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -320,13 +321,13 @@ async function addEntry() {
       // Update existing
       await sbFetch('entries?id=eq.' + existing[0].id, {
         method: 'PATCH',
-        body: JSON.stringify({ weight: w,note: '' })
+        body: JSON.stringify({ weight: w, note: n })
       });
     } else {
       // Insert new
       await sbFetch('entries', {
         method: 'POST',
-        body: JSON.stringify({ user_name: currentUser, date: d, weight: w,note: '' })
+        body: JSON.stringify({ user_name: currentUser, date: d, weight: w, note: n })
       });
     }
     document.getElementById('inp-weight').value = '';
@@ -359,7 +360,7 @@ async function saveEdit(id) {
   if (isNaN(w) || w < 20 || w > 300) { toast('Invalid weight'); return; }
   setSyncState('loading', 'Saving…');
   try {
-    await sbFetch('entries?id=eq.' + id, { method: 'PATCH', body: JSON.stringify({ weight: w,note: '' }) });
+    await sbFetch('entries?id=eq.' + id, { method: 'PATCH', body: JSON.stringify({ weight: w, note: n }) });
     editingId = null;
     toast('Updated');
     await loadEntries();
@@ -513,9 +514,11 @@ function percentileDatasets(dates, isDark) {
   const p3vals  = dates.map(d => { const lms = getLMS(ageInMonths(d)); return lms ? parseFloat(weightAtZ(lms, Z_P3).toFixed(2))  : null; });
   const p10vals = dates.map(d => { const lms = getLMS(ageInMonths(d)); return lms ? parseFloat(weightAtZ(lms, Z_P10).toFixed(2)) : null; });
 
+  const p3xy  = dates.map((d, i) => ({ x: d, y: p3vals[i] }));
+  const p10xy = dates.map((d, i) => ({ x: d, y: p10vals[i] }));
   return [
-    { label: '25th percentile',  data: p3vals,  borderColor: p3Color,  backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [5,4], pointRadius: 0, tension: 0.35, fill: false, spanGaps: true },
-    { label: '10th percentile', data: p10vals, borderColor: p10Color, backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [5,4], pointRadius: 0, tension: 0.35, fill: false, spanGaps: true }
+    { label: '25th percentile',  data: p3xy,  borderColor: p3Color,  backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [5,4], pointRadius: 0, tension: 0.35, fill: false, spanGaps: true },
+    { label: '10th percentile', data: p10xy, borderColor: p10Color, backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [5,4], pointRadius: 0, tension: 0.35, fill: false, spanGaps: true }
   ];
 }
 
@@ -540,10 +543,10 @@ function renderChart() {
 
   if (chart) { chart.destroy(); chart = null; }
 
-  const labels = data.map(e => formatDate(e.date));
+  const labels = data.map(e => e.date);
   const userDataset = {
     label: 'Max',
-    data: data.map(e => parseFloat(e.weight)),
+    data: data.map(e => ({ x: e.date, y: parseFloat(e.weight) })),
     borderColor: green, backgroundColor: greenFill, pointBackgroundColor: green,
     pointRadius: data.length > 60 ? 2 : 5, pointHoverRadius: 7,
     borderWidth: 2, fill: true, tension: 0.35
@@ -564,15 +567,13 @@ function renderChart() {
             if (ctx.dataset.label === '25th percentile' || ctx.dataset.label === '10th percentile') {
               return ctx.dataset.label + ': ' + parseFloat(ctx.parsed.y).toFixed(2) + ' kg';
             }
-            const e = data[ctx.dataIndex];
-            let s = parseFloat(ctx.parsed.y).toFixed(2) + ' kg';
-            return s;
+            return parseFloat(ctx.parsed.y).toFixed(2) + ' kg';
           }
         }
       }
     },
     scales: {
-      x: { ticks: { color: tickCol, font: { family:"'DM Mono',monospace", size:11 }, maxRotation:40, maxTicksLimit:10 }, grid: { color: gridCol } },
+      x: { type: 'time', time: { unit: 'day', tooltipFormat: 'd MMM yyyy', displayFormats: { day: 'd MMM' } }, ticks: { color: tickCol, font: { family:"'DM Mono',monospace", size:11 }, maxRotation:40, maxTicksLimit:10 }, grid: { color: gridCol } },
       y: { ticks: { color: tickCol, font: { family:"'DM Mono',monospace", size:11 }, callback: v => parseFloat(v).toFixed(2)+' kg' }, grid: { color: gridCol } }
     }
   };
