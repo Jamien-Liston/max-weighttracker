@@ -110,13 +110,13 @@
   .filter-select { height: 28px; border: 1px solid var(--border); border-radius: 5px; background: var(--surface); color: var(--text-muted); font-family: var(--mono); font-size: 11px; padding: 0 8px; outline: none; cursor: pointer; }
 
   /* Chart */
-  .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; }
-  .chart-wrap { position: relative; height: 280px; }
+  .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; max-width: 100%; overflow: hidden; }
+  .chart-wrap { position: relative; height: 280px; max-width: 100%; }
   .chart-empty { display: flex; align-items: center; justify-content: center; height: 280px; color: var(--text-faint); font-size: 13px; }
 
   /* List */
   .list-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
-  .list-header { display: grid; grid-template-columns: 110px 80px 72px 1fr; padding: 8px 16px; background: var(--surface-2); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border); gap: 8px; }
+  .list-header { display: grid; grid-template-columns: 110px 80px 72px 1fr; padding: 8px 16px; background: var(--surface-2); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text); border-bottom: 1px solid var(--border); gap: 8px; }
   .list-row { display: grid; grid-template-columns: 110px 80px 72px 1fr; padding: 10px 16px; border-bottom: 1px solid var(--border); gap: 8px; align-items: center; transition: background 0.1s; }
   .list-row:last-child { border-bottom: none; }
   .list-row:hover { background: var(--surface-2); }
@@ -128,7 +128,7 @@
   .delta-pos { color: var(--green); }
   .delta-nil { color: var(--text-faint); }
   .row-actions { display: flex; gap: 24px; justify-content: flex-end; }
-  .icon-btn { background: transparent; border: none; cursor: pointer; color: var(--text-muted); padding: 4px 6px; border-radius: 4px; font-size: 16px; transition: background 0.1s, color 0.1s; }
+  .icon-btn { background: transparent; border: none; cursor: pointer; color: var(--text-muted); padding: 4px 8px; border-radius: 4px; font-size: 16px; transition: background 0.1s, color 0.1s; min-width: 24px; min-height: 24px; display: inline-flex; align-items: center; justify-content: center; }
   .icon-btn:hover { background: var(--surface-2); color: var(--text); }
   .edit-input { width: 72px; height: 26px; font-family: var(--mono); font-size: 12px; border: 1px solid var(--accent); border-radius: 4px; padding: 0 6px; background: var(--surface); color: var(--text); outline: none; }
 
@@ -230,7 +230,7 @@
         <div id="list-body"></div>
       </div>
     </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;"><span class="entry-count" id="entry-count"></span><span style="font-family:var(--mono);font-size:11px;color:var(--text-faint);">v0.12</span></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;"><span class="entry-count" id="entry-count"></span><span style="font-family:var(--mono);font-size:11px;color:var(--text-faint);">v0.13</span></div>
   </main>
 </div>
 
@@ -596,7 +596,7 @@ function renderChart() {
     },
     scales: {
       x: { type: 'time', time: { unit: 'day', tooltipFormat: 'd MMM yyyy', displayFormats: { day: 'd MMM' } }, ticks: { color: tickCol, font: { family:"'DM Mono',monospace", size:11, letterSpacing:-0.5 }, maxRotation:40, maxTicksLimit:10 }, grid: { color: gridCol } },
-      y: { ticks: { color: tickCol, font: { family:"'DM Mono',monospace", size:11, letterSpacing:-0.5 }, callback: v => parseFloat(v).toFixed(2)+' kg' }, grid: { color: gridCol } }
+      y: { ticks: { color: tickCol, font: { family:"'DM Mono',monospace", size:11, letterSpacing:-0.5 }, callback: v => parseFloat(v).toFixed(1)+' kg' }, grid: { color: gridCol } }
     }
   };
 
