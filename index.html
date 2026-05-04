@@ -196,7 +196,7 @@
     <div class="stats-row">
       <div class="stat-card"><div class="stat-label">Current</div><div class="stat-value" id="stat-current">–</div><div class="stat-unit">kg</div></div>
       <div class="stat-card"><div class="stat-label">Starting</div><div class="stat-value" id="stat-start">–</div><div class="stat-unit">kg</div></div>
-      <div class="stat-card"><div class="stat-label">Total change</div><div class="stat-value" id="stat-change">–</div><div class="stat-unit">kg</div></div>
+      <div class="stat-card"><div class="stat-label">vs Baseline</div><div class="stat-value" id="stat-change">–</div><div class="stat-unit">kg</div></div>
     </div>
 
     <div class="view-bar">
@@ -230,7 +230,7 @@
         <div id="list-body"></div>
       </div>
     </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;"><span class="entry-count" id="entry-count"></span><span style="font-family:var(--mono);font-size:11px;color:var(--text-faint);">v0.18</span></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:1rem;"><span class="entry-count" id="entry-count"></span><span style="font-family:var(--mono);font-size:11px;color:var(--text-muted);text-align:center;flex:1;">Baseline is Max's first weigh-in. He started below the 10th percentile, so beating baseline closes the gap.</span><span style="font-family:var(--mono);font-size:11px;color:var(--text-faint);">v0.19</span></div>
   </main>
 </div>
 
@@ -415,9 +415,10 @@ function updateStats() {
   document.getElementById('stat-start').textContent   = first.toFixed(2);
   const chEl = document.getElementById('stat-change');
   chEl.textContent  = (diff > 0 ? '+' : '') + diff.toFixed(2);
-  // Green only if gained weight AND closing gap to 10th percentile vs starting entry
-  const onTrack = mine.length >= 2 ? isOnTrack(mine[mine.length - 1], mine[mine.length - 2]) : null;
-  chEl.className = 'stat-value' + (onTrack === 'green' ? ' positive' : onTrack === 'red' ? ' negative' : onTrack === 'amber' ? ' amber' : '');
+
+  // New colour logic: based on position vs 10th percentile + 14-day trend
+  const status = baselineStatus(mine);
+  chEl.className = 'stat-value' + (status === 'green' ? ' positive' : status === 'red' ? ' negative' : status === 'amber' ? ' amber' : '');
 }
 
 // ── Views ──────────────────────────────────────────────
@@ -527,6 +528,43 @@ function p25ForDate(dateStr) {
 }
 
 // Returns true if weight increased AND gap to 10th percentile shrunk vs previous entry
+function baselineStatus(sortedEntries) {
+  if (sortedEntries.length === 0) return null;
+  const latest = sortedEntries[sortedEntries.length - 1];
+  const latestWeight = parseFloat(latest.weight);
+  const p10Latest = p25ForDate(latest.date) === null ? null : (() => {
+    const lms = getLMS(ageInMonths(latest.date));
+    return lms ? weightAtZ(lms, Z_P10) : null;
+  })();
+  if (p10Latest === null) return null;
+
+  // Below or at 10th percentile = red
+  if (latestWeight <= p10Latest) return 'red';
+
+  // Above 10th. Now look at trend over last 14 days.
+  const cutoff = new Date(latest.date);
+  cutoff.setDate(cutoff.getDate() - 14);
+  const recent = sortedEntries.filter(e => new Date(e.date) >= cutoff);
+  if (recent.length < 2) return 'amber'; // not enough data to assess trend
+
+  // Simple linear regression: slope of weight over days
+  const t0 = new Date(recent[0].date).getTime();
+  const xs = recent.map(e => (new Date(e.date).getTime() - t0) / (1000 * 60 * 60 * 24));
+  const ys = recent.map(e => parseFloat(e.weight));
+  const n = xs.length;
+  const sumX = xs.reduce((a,b) => a+b, 0);
+  const sumY = ys.reduce((a,b) => a+b, 0);
+  const sumXY = xs.reduce((a,_,i) => a + xs[i]*ys[i], 0);
+  const sumXX = xs.reduce((a,b) => a + b*b, 0);
+  const slope = (n*sumXY - sumX*sumY) / (n*sumXX - sumX*sumX);
+  // slope is kg/day. Convert to kg/week for threshold.
+  const kgPerWeek = slope * 7;
+
+  if (kgPerWeek > 0.05) return 'green';
+  if (kgPerWeek < -0.05) return 'red';
+  return 'amber';
+}
+
 function isOnTrack(curr, prev) {
   if (!prev) return null;
   const gapNow  = p25ForDate(curr.date) - parseFloat(curr.weight);
