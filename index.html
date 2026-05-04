@@ -230,7 +230,7 @@
         <div id="list-body"></div>
       </div>
     </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;"><span class="entry-count" id="entry-count"></span><span style="font-family:var(--mono);font-size:11px;color:var(--text-faint);">v0.16</span></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;"><span class="entry-count" id="entry-count"></span><span style="font-family:var(--mono);font-size:11px;color:var(--text-faint);">v0.18</span></div>
   </main>
 </div>
 
@@ -498,9 +498,11 @@ const Z_P3  = -0.6745; // 25th percentile
 const Z_P10 = -1.2816; // 10th percentile
 
 function ageInMonths(dateStr) {
+  // Returns fractional months for smooth percentile curves
   const d = new Date(dateStr);
-  return (d.getFullYear() - MAX_DOB.getFullYear()) * 12 + (d.getMonth() - MAX_DOB.getMonth()) +
-    (d.getDate() >= MAX_DOB.getDate() ? 0 : -1);
+  const msPerDay = 24 * 60 * 60 * 1000;
+  const daysSinceDOB = (d - MAX_DOB) / msPerDay;
+  return daysSinceDOB / 30.4375; // average days per month
 }
 
 function getLMS(months) {
@@ -548,8 +550,8 @@ function percentileDatasets(dates, isDark) {
   const p3xy  = dates.map((d, i) => ({ x: d, y: p3vals[i] }));
   const p10xy = dates.map((d, i) => ({ x: d, y: p10vals[i] }));
   return [
-    { label: '10th percentile', data: p10xy, borderColor: p10Color, backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [5,4], pointRadius: 0, tension: 0.35, fill: false, spanGaps: true },
-    { label: '25th percentile',  data: p3xy,  borderColor: p3Color,  backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [5,4], pointRadius: 0, tension: 0.35, fill: false, spanGaps: true }
+    { label: '10th percentile', data: p10xy, borderColor: p10Color, backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [5,4], pointRadius: 0, tension: 0, fill: false, spanGaps: true },
+    { label: '25th percentile',  data: p3xy,  borderColor: p3Color,  backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [5,4], pointRadius: 0, tension: 0, fill: false, spanGaps: true }
   ];
 }
 
@@ -582,7 +584,17 @@ function renderChart() {
     pointRadius: data.length > 60 ? 2 : 5, pointHoverRadius: 7,
     borderWidth: 2, fill: true, tension: 0.35
   };
-  const datasets = [userDataset, ...percentileDatasets(data.map(e => e.date), isDark)];
+  // Generate smooth percentile curves across full date range, one point per day
+  const firstDate = new Date(data[0].date);
+  const lastDate  = new Date(data[data.length - 1].date);
+  const continuousDates = [];
+  for (let d = new Date(firstDate); d <= lastDate; d.setDate(d.getDate() + 1)) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    continuousDates.push(y + '-' + m + '-' + day);
+  }
+  const datasets = [userDataset, ...percentileDatasets(continuousDates, isDark)];
 
   const baseOpts = {
     responsive: true, maintainAspectRatio: false, animation: { duration: 250 },
