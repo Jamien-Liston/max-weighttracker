@@ -19,6 +19,7 @@
       content="#141210"
       media="(prefers-color-scheme: dark)"
     />
+    <link rel="apple-touch-icon" href="icons/icon-512.png" />
     <title>Max WeightTracker</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
@@ -693,7 +694,7 @@
                 font-size: 11px;
                 color: var(--text-muted);
               "
-              >v0.22</span
+              >v0.23</span
             ><span
               class="entry-count"
               id="entry-count"
@@ -1263,7 +1264,7 @@
           borderColor: lineCol,
           backgroundColor: lineFill,
           pointBackgroundColor: lineCol,
-          pointRadius: data.length > 60 ? 2 : 5,
+          pointRadius: data.length > 60 ? 0 : 3,
           pointHoverRadius: 7,
           borderWidth: 2,
           fill: true,
